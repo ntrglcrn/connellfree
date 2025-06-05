@@ -1,8 +1,10 @@
-import { videos } from '@/lib/data';
+import { client } from '@/lib/sanity.client';
+import { getAllVideosQuery } from '@/lib/queries';
 import VideoCard from '@/components/VideoCard';
 import React from 'react';
 
 const Home = async () => {
+  const videos = await client.fetch(getAllVideosQuery);
   return (
     <div className="max-w-screen-xl mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Latest Videos</h1>

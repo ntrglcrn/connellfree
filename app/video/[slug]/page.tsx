@@ -1,31 +1,67 @@
-import { videos } from '@/lib/data';
-import VideoPlayer from '@/components/VideoPlayer';
-import TagList from '@/components/TagList';
-import RelatedVideos from '@/components/RelatedVideos';
-import React from 'react';
+import { client } from '@/lib/sanity.client'
+import { getVideoBySlugQuery, getRelatedVideosQuery } from '@/lib/queries'
 
-interface PageProps {
-  params: { slug: string };
+type Props = {
+  params: {
+    slug: string
+  }
 }
 
-const Page = async ({ params }: PageProps) => {
-  const { slug } = params;
-  const video = videos.find(v => v.slug === slug);
+export default async function VideoPage({ params }: Props) {
+  const video = await client.fetch(getVideoBySlugQuery, {
+    slug: params.slug
+  })
 
   if (!video) {
-    return <p>Not Found</p>;
+    return <div>Видео не найдено</div>
   }
 
-  return (
-    <div className="max-w-2xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">{video.title}</h1>
-      <VideoPlayer url={video.url} />
-      <div className="my-4">
-        <TagList tags={video.tags} />
-      </div>
-      <RelatedVideos currentSlug={video.slug} tags={video.tags} />
-    </div>
-  );
-};
+  const relatedVideos = await client.fetch(getRelatedVideosQuery, {
+    id: video._id,
+    tags: video.tags || []
+  })
 
-export default Page; 
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-4">{video.title}</h1>
+
+      <iframe
+        src={video.url}
+        className="w-full aspect-video rounded"
+        allowFullScreen
+      />
+
+      <div className="mt-4">
+        <h2 className="text-sm font-semibold">Теги:</h2>
+        <div className="flex flex-wrap gap-2 mt-1 text-sm text-gray-600">
+          {video.tags?.map((tag: string) => (
+            <span key={tag} className="bg-gray-200 px-2 py-1 rounded">
+              #{tag}
+            </span>
+          ))}
+        </div>
+      </div>
+      {relatedVideos.length > 0 && (
+        <div className="mt-10">
+          <h2 className="text-xl font-bold mb-4">Похожие видео</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {relatedVideos.map((item: any) => (
+              <a
+                key={item._id}
+                href={`/video/${item.slug}`}
+                className="block group"
+              >
+                <img
+                  src={item.thumbnail}
+                  alt={item.title}
+                  className="rounded w-full aspect-video object-cover group-hover:opacity-80 transition"
+                />
+                <div className="mt-2 text-sm font-medium">{item.title}</div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+} 
