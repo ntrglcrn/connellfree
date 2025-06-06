@@ -1,3 +1,15 @@
+export const getAllVideosQuery = `
+  *[_type == "video"] | order(_createdAt desc) {
+    _id,
+    title,
+    "slug": slug.current,
+    url,
+    "thumbnail": thumbnail.asset->url,
+    tags,
+    category
+  }
+`
+
 export const getVideoBySlugQuery = `
   *[_type == "video" && slug.current == $slug][0] {
     _id,
@@ -21,3 +33,4 @@ export const getRelatedVideosQuery = `
     category
   }
 `
+ 
